@@ -1,0 +1,28 @@
+{
+  "name": "taskflow",
+  "version": "1.0.0",
+  "description": "TaskFlow — lightweight project management with Gmail integration",
+  "private": true,
+  "scripts": {
+    "start": "node server/index.js",
+    "dev:server": "node server/index.js",
+    "dev:client": "cd client && npx react-scripts start",
+    "build": "cd client && npx react-scripts build",
+    "postinstall": "cd client && npm install"
+  },
+  "dependencies": {
+    "better-sqlite3": "^11.7.0",
+    "connect-sqlite3": "^0.9.15",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.1",
+    "express-session": "^1.18.1",
+    "googleapis": "^144.0.0",
+    "helmet": "^8.0.0",
+    "morgan": "^1.10.0",
+    "uuid": "^11.0.3"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
