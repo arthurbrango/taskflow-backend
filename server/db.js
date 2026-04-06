@@ -40,7 +40,9 @@ db.exec(`
     name     TEXT NOT NULL,
     email    TEXT,
     initials TEXT,
-    color    TEXT DEFAULT '#6366f1'
+    color    TEXT DEFAULT '#6366f1',
+    role     TEXT DEFAULT 'member' CHECK(role IN ('admin','member')),
+    active   INTEGER DEFAULT 1
   );
 
   CREATE TABLE IF NOT EXISTS tasks (
@@ -85,6 +87,10 @@ db.exec(`
   );
 `);
 
+// ── Migrations (add columns to existing DBs) ────────────
+try { db.exec("ALTER TABLE team_members ADD COLUMN role TEXT DEFAULT 'member'"); } catch {}
+try { db.exec("ALTER TABLE team_members ADD COLUMN active INTEGER DEFAULT 1"); } catch {}
+
 // ── Seed data (only if tables are empty) ─────────────────
 
 function seedIfEmpty() {
@@ -97,14 +103,14 @@ function seedIfEmpty() {
 
   // Team members
   const members = [
-    { name: 'Mark',    initials: 'MK', color: '#6366f1' },
-    { name: 'Sarah',   initials: 'SA', color: '#ec4899' },
-    { name: 'James',   initials: 'JA', color: '#14b8a6' },
-    { name: 'Allison', initials: 'AL', color: '#f59e0b' },
-    { name: 'Mike',    initials: 'MI', color: '#8b5cf6' },
+    { name: 'Mark',    initials: 'MK', color: '#6366f1', role: 'admin' },
+    { name: 'Sarah',   initials: 'SA', color: '#ec4899', role: 'member' },
+    { name: 'James',   initials: 'JA', color: '#14b8a6', role: 'member' },
+    { name: 'Allison', initials: 'AL', color: '#f59e0b', role: 'member' },
+    { name: 'Mike',    initials: 'MI', color: '#8b5cf6', role: 'member' },
   ];
-  const insertMember = db.prepare('INSERT INTO team_members (name, initials, color) VALUES (?, ?, ?)');
-  for (const m of members) insertMember.run(m.name, m.initials, m.color);
+  const insertMember = db.prepare('INSERT INTO team_members (name, initials, color, role) VALUES (?, ?, ?, ?)');
+  for (const m of members) insertMember.run(m.name, m.initials, m.color, m.role);
 
   // Sample tasks for Brango (project 1)
   const insertTask = db.prepare(

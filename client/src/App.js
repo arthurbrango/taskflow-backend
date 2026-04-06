@@ -6,6 +6,7 @@ import EmailPanel from './components/EmailPanel';
 import LoginPage from './components/LoginPage';
 import AccessDenied from './components/AccessDenied';
 import TaskModal from './components/TaskModal';
+import AdminPanel from './components/AdminPanel';
 
 export default function App() {
   const [user, setUser] = useState(undefined);
@@ -17,10 +18,10 @@ export default function App() {
   const [emailOpen, setEmailOpen] = useState(true);
   const [modal, setModal] = useState(null);
   const [darkMode, setDarkMode] = useState(() => localStorage.getItem('tf-dark') === 'true');
+  const [currentView, setCurrentView] = useState('board'); // 'board' | 'admin'
 
   const isAccessDenied = window.location.pathname === '/access-denied';
 
-  // Apply dark mode class
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', darkMode ? 'dark' : 'light');
     localStorage.setItem('tf-dark', darkMode);
@@ -30,13 +31,17 @@ export default function App() {
     auth.me().then(d => setUser(d.user)).catch(() => setUser(null));
   }, []);
 
+  const loadTeam = useCallback(() => {
+    teamApi.list().then(setTeamMembers);
+  }, []);
+
   useEffect(() => {
     if (!user) return;
     projectsApi.list().then(p => {
       setProjectsList(p);
       if (p.length > 0 && !activeProject) setActiveProject(p[0]);
     });
-    teamApi.list().then(setTeamMembers);
+    loadTeam();
   }, [user]); // eslint-disable-line
 
   const loadTasks = useCallback(() => {
@@ -88,45 +93,60 @@ export default function App() {
     setUser(null);
   };
 
+  // Only show active members in board filters/assignees
+  const activeMembers = teamMembers.filter(m => m.active !== 0);
+
   if (isAccessDenied) return <AccessDenied />;
   if (user === undefined) return <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', color: 'var(--text-muted)' }}>Loading…</div>;
   if (!user) return <LoginPage />;
 
   return (
-    <div className={`app-layout ${emailOpen ? '' : 'email-closed'}`}>
+    <div className={`app-layout ${emailOpen && currentView === 'board' ? '' : 'email-closed'}`}>
       <Sidebar
         user={user}
         projects={projectsList}
         activeProject={activeProject}
-        onSelectProject={setActiveProject}
+        onSelectProject={(p) => { setActiveProject(p); setCurrentView('board'); }}
         onAddProject={handleAddProject}
         onDeleteProject={handleDeleteProject}
         onLogout={handleLogout}
         onToggleEmail={() => setEmailOpen(e => !e)}
         emailOpen={emailOpen}
+        currentView={currentView}
+        onShowAdmin={(show) => setCurrentView(show ? 'admin' : 'board')}
       />
 
-      <KanbanBoard
-        project={activeProject}
-        tasks={tasksList}
-        teamMembers={teamMembers}
-        filterAssignee={filterAssignee}
-        onFilterAssignee={setFilterAssignee}
-        onMoveTask={handleMoveTask}
-        onEditTask={(task) => setModal({ mode: 'edit', task })}
-        onDeleteTask={handleDeleteTask}
-        onNewTask={() => setModal({ mode: 'create' })}
-        darkMode={darkMode}
-        onToggleDark={() => setDarkMode(d => !d)}
-      />
+      {currentView === 'board' && (
+        <KanbanBoard
+          project={activeProject}
+          tasks={tasksList}
+          teamMembers={activeMembers}
+          filterAssignee={filterAssignee}
+          onFilterAssignee={setFilterAssignee}
+          onMoveTask={handleMoveTask}
+          onEditTask={(task) => setModal({ mode: 'edit', task })}
+          onDeleteTask={handleDeleteTask}
+          onNewTask={() => setModal({ mode: 'create' })}
+          darkMode={darkMode}
+          onToggleDark={() => setDarkMode(d => !d)}
+        />
+      )}
 
-      {emailOpen && <EmailPanel user={user} />}
+      {currentView === 'admin' && (
+        <AdminPanel
+          teamMembers={teamMembers}
+          onUpdate={loadTeam}
+          onBack={() => setCurrentView('board')}
+        />
+      )}
+
+      {emailOpen && currentView === 'board' && <EmailPanel user={user} />}
 
       {modal && (
         <TaskModal
           mode={modal.mode}
           task={modal.task}
-          teamMembers={teamMembers}
+          teamMembers={activeMembers}
           onSave={modal.mode === 'create' ? handleCreateTask : (data) => handleUpdateTask(modal.task.id, data)}
           onClose={() => setModal(null)}
           onDelete={modal.mode === 'edit' ? () => { handleDeleteTask(modal.task.id); setModal(null); } : undefined}

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { Mail, Plus, Check, X, Trash2, FolderKanban, ChevronRight } from 'lucide-react';
+import { Mail, Plus, Check, X, Trash2, FolderKanban, ChevronRight, Settings } from 'lucide-react';
 
-export default function Sidebar({ user, projects, activeProject, onSelectProject, onAddProject, onDeleteProject, onLogout, onToggleEmail, emailOpen }) {
+export default function Sidebar({ user, projects, activeProject, onSelectProject, onAddProject, onDeleteProject, onLogout, onToggleEmail, emailOpen, currentView, onShowAdmin }) {
   const [adding, setAdding] = useState(false);
   const [newName, setNewName] = useState('');
 
@@ -67,11 +67,14 @@ export default function Sidebar({ user, projects, activeProject, onSelectProject
 
       <div className="sidebar-section" style={{ marginTop: 12 }}>
         <div className="sidebar-section-title">Views</div>
-        <button className="sidebar-item active">
+        <button className={`sidebar-item ${currentView === 'board' ? 'active' : ''}`} onClick={onShowAdmin ? () => onShowAdmin(false) : undefined}>
           <FolderKanban size={16} /> Board
         </button>
         <button className="sidebar-item" onClick={onToggleEmail}>
           <Mail size={16} /> {emailOpen ? 'Hide Email' : 'Show Email'}
+        </button>
+        <button className={`sidebar-item ${currentView === 'admin' ? 'active' : ''}`} onClick={() => onShowAdmin && onShowAdmin(true)}>
+          <Settings size={16} /> Team Admin
         </button>
       </div>
 

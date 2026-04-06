@@ -39,8 +39,11 @@ export const tasks = {
 };
 
 export const team = {
-  list: () => api('/api/team'),
-  create: (name, email, color) => api('/api/team', { method: 'POST', body: JSON.stringify({ name, email, color }) }),
+  list: (activeOnly) => api(`/api/team${activeOnly ? '?active=1' : ''}`),
+  create: (data) => api('/api/team', { method: 'POST', body: JSON.stringify(data) }),
+  update: (id, data) => api(`/api/team/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  toggleActive: (id) => api(`/api/team/${id}/toggle-active`, { method: 'PUT' }),
+  toggleRole: (id) => api(`/api/team/${id}/toggle-role`, { method: 'PUT' }),
   remove: (id) => api(`/api/team/${id}`, { method: 'DELETE' }),
 };
 
